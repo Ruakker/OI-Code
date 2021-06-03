@@ -1,2 +1,7 @@
 *.exe
+*.in
+*.out
+*.h
 .history
+test.cpp
+temp.cpp
