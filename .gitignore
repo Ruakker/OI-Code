@@ -3,5 +3,6 @@
 *.out
 *.h
 .history
+Temp
 test.cpp
 temp.cpp
