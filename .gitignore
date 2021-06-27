@@ -1,8 +1,3 @@
-*.exe
-*.in
-*.out
-*.h
-.history
-Temp
-test.cpp
-temp.cpp
+*
+!/**/
+!*.cpp

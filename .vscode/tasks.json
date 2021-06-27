@@ -3,7 +3,7 @@
         {
             "type": "cppbuild",
             "label": "g++.exe build active file",
-            "command": "C:\\mingw64\\bin\\g++.exe",
+            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
             "args": [
                 "-g",
                 "${file}",
@@ -11,11 +11,11 @@
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
             "options": {
-                "cwd": "C:\\mingw64\\bin"
+                "cwd": "C:\\msys64\\mingw64\\bin\\"
             },
             "problemMatcher": ["$gcc"],
             "group": "build",
-            "detail": "编译器: C:\\mingw64\\bin\\g++.exe"
+            "detail": "编译器: C:\\msys64\\mingw64\\bin\\g++.exe"
         }
     ],
     "version": "2.0.0"
