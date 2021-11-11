@@ -34,10 +34,9 @@ void srand(int x) {
 }  // namespace GenHelper
 
 const int N = 8005;
-int n, m, ans, seed;
-int tag[N], dgr[N];
+long long n, m, ans, seed;
+long long cnt[2];
 bool edge[N][N];
-std::vector<int> g[N][2];
 
 signed main() {
 #ifndef DEBUG
@@ -48,29 +47,16 @@ signed main() {
     GenHelper::srand(seed);
 
     for (int i = 1; i <= n; ++i)
-        for (int j = i + 1; j <= n; ++j) {
+        for (int j = i + 1; j <= n; ++j)
             edge[j][i] = edge[i][j] = GenHelper::read();
-            g[i][edge[i][j]].push_back(j);
-            g[j][edge[j][i]].push_back(i);
-        }
 
-    int cnt = 0;
-    for (int u = 1; u <= n; ++u) {
-        ++cnt;
-        for (auto v : g[u][0]) {
-            tag[v] = cnt;
-            for (auto w : g[v][0])
-                if (tag[w] == cnt && edge[v][w] == 0) ++ans;
-        }
-        ++cnt;
-        for (auto v : g[u][1]) {
-            tag[v] = cnt;
-            for (auto w : g[v][1])
-                if (tag[w] == cnt && edge[v][w] == 1) ++ans;
-        }
+    for (int i = 1; i <= n; ++i) {
+        cnt[0] = cnt[1] = 0;
+        for (int j = 1; j <= n; ++j)
+            cnt[edge[i][j]]++;
+        ans += cnt[1] * (cnt[0] - 1);
     }
 
-    ans /= 3;
-    cout << ans << '\n';
+    cout << n * (n - 1) * (n - 2) / 6 - ans / 2 << '\n';
     return 0;
 }
