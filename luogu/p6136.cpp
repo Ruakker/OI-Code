@@ -1,106 +1,135 @@
-/*
-    Author: Ruakker
-    Date: 2021-04-26 08:19:19
-    LastEditTime: 2021-05-13 20:38:12
-*/
 #include <bits/stdc++.h>
-#define ll long long
-#define inf 0x3f3f3f3f
-inline ll read() {
-    ll x = 0, w = 1;
-    char ch = getchar();
-    for (; !isdigit(ch); ch = getchar())
-        if (ch == '-') w = -1;
-    for (; isdigit(ch); ch = getchar()) x = x * 10 + (ch - '0');
-    return x * w;
-}
-void write(ll x) {
-    if (x < 0) x = -x, putchar('-');
-    if (x > 9) write(x / 10);
-    putchar(x % 10 + '0');
-}
-inline void writeln(ll x) { write(x), putchar('\n'); }
-const int N = 2e6 + 5;
-struct Ruakker {
-    int sz, son[2], val, weight;
-} tr[N];
-int tot = 0, n, rt, x, y, z, last = 0, ans;
+using std::cin;
+using std::cout;
+using std::cerr;
 
-/* basic operation */
-inline int newnode(int val) {
-    tr[++tot].sz = 1, tr[tot].val = val, tr[tot].weight = rand(),
-    tr[tot].son[0] = tr[tot].son[1] = 0;
-    return tot;
-}
-inline void calcsize(int cur) {
-    tr[cur].sz = tr[tr[cur].son[0]].sz + tr[tr[cur].son[1]].sz + 1;
-}
-int merge(int x, int y) {  // default:x_val<y_val
-    if (!x || !y) return x + y;
-    if (tr[x].weight < tr[y].weight) {  // it will do like the small-root heap
-        tr[x].son[1] = merge(tr[x].son[1], y), calcsize(x);
-        return x;
-    } else {
-        tr[y].son[0] = merge(x, tr[y].son[0]), calcsize(y);
-        return y;
+const int N = 2e6 + 5;
+int n, m, ans, last;
+
+std::random_device seed;
+std::mt19937 rnd(seed());
+
+template <typename T>
+class FhqTreap {
+    struct Node {
+        Node(T w = 0) {
+            size = 1, weight = rnd(), val = w;
+            l = r = nullptr;
+        }
+        int size, weight;
+        T val;
+        Node *l, *r;
+    };
+    int n;
+    Node *root;
+
+    inline void calc(Node *u) {
+        u->size = (u->l != nullptr ? u->l->size : 0) + (u->r != nullptr ? u->r->size + 1 : 0);
     }
-}
-void split(int cur, int val, int &x, int &y) {
-    if (!cur) return x = y = 0, void();
-    if (tr[cur].val <= val)  //'<' & '=' then node at the left,'>' at the right
-        x = cur, split(tr[cur].son[1], val, tr[cur].son[1], y);
-    else  // left_son tree.val must < val,so let's split the right_son tree.
-        y = cur, split(tr[cur].son[0], val, x,
-                       tr[cur].son[0]);  // right_son tree.val must > val,so
-                                         // let's split the left_son tree.
-    calcsize(cur);
-}
-inline int kth(int cur, int k) {  // get the kth node [id] in tree_cur.
-    for (; 1;) {
-        if (k == tr[tr[cur].son[0]].sz +
-                     1)  // the size include the node itself,so "sz == k+1".
-            return cur;
-        if (k <= tr[tr[cur].son[0]].sz)
-            cur = tr[cur].son[0];
-        else {
-            k -= tr[tr[cur].son[0]].sz + 1;
-            cur = tr[cur].son[1];
+
+    Node *merge(Node *u, Node *v) {
+        if (u == nullptr) return v;
+        if (v == nullptr) return u;
+
+        if (u->weight < v->weight) {
+            u->r = merge(u->r, v);
+            calc(u);
+            return u;
+        } else {
+            v->l = merge(u, v->l);
+            calc(v);
+            return v;
         }
     }
-}
-/* end of the basic operation */
+    std::pair<Node *, Node *> split(Node *u, T w) {
+        if (u == nullptr) return {nullptr, nullptr};
 
-inline void ins(int val) {
-    split(rt, val, x, y), rt = merge(merge(x, newnode(val)), y);
-}
-inline void del(int val) {
-    split(rt, val, x, y), split(x, val - 1, x, z);
-    z = merge(tr[z].son[0], tr[z].son[1]);
-    rt = merge(merge(x, z), y);
-}
-inline void getrank(int val) {
-    split(rt, val - 1, x, y), last = tr[x].sz + 1, rt = merge(x, y);
-}
-inline void getnum(int rk) { last = tr[kth(rt, rk)].val; }
-inline void getpre(int val) {
-    split(rt, val - 1, x, y), last = tr[kth(x, tr[x].sz)].val, rt = merge(x, y);
-}
-inline void getsuc(int val) {
-    split(rt, val, x, y), last = tr[kth(y, 1)].val, rt = merge(x, y);
-}
-signed main() {
-    srand(time(0));
-    int n = read(), m = read();
-    for (; n--;) ins(read());
-    for (; m--;) {
-        int opt = read(), u = read() ^ last;
-        if (opt == 1) ins(u);
-        if (opt == 2) del(u);
-        if (opt == 3) getrank(u), ans ^= last;
-        if (opt == 4) getnum(u), ans ^= last;
-        if (opt == 5) getpre(u), ans ^= last;
-        if (opt == 6) getsuc(u), ans ^= last;
+        if (w < u->val) {
+            auto o = split(u->l, w);
+            u->l = o.second;
+            calc(u);
+            return {o.first, u};
+        } else {
+            auto o = split(u->r, w);
+            u->r = o.first;
+            calc(u);
+            return {u, o.second};
+        }
     }
-    writeln(ans);
+    Node *kth(Node *u, int k) {
+        assert(root != nullptr);
+        assert(root->size < k);
+        while (k != u->l->size + 1) {
+            if (k <= u->l->size)
+                u = u->l;
+            else {
+                k -= u->l->size + 1;
+                u = u->r;
+            }
+        }
+        return u;
+    }
+
+   public:
+    inline void insert(T w) {
+        auto o = split(root, w);
+        root = merge(merge(o.first, new Node(w)), o.second);
+    }
+
+    inline void erase(T w) {
+        auto o1 = split(root, w - 1);
+        auto o2 = split(o1.second, w);
+        delete o2.first;
+        root = merge(o1.first, o2.second);
+    }
+
+    inline int rank(T w) {
+        auto o = split(root, w - 1);
+        int res = o.first->size + 1;
+        root = merge(o.first, o.second);
+        return res;
+    }
+
+    inline T at(int pos) { return kth(root, pos)->val; }
+    inline T operator[](int pos) { return at(pos); }
+
+    inline T getpre(T w) {
+        auto o = split(root, w - 1);
+        T res = kth(o.first, o.first->size)->val;
+        root = merge(o.first, o.second);
+        return res;
+    }
+    inline T getsuc(T w) {
+        auto o = split(root, w);
+        T res = kth(o.second, 1)->val;
+        root = merge(o.first, o.second);
+        return res;
+    }
+};
+
+FhqTreap<int> T;
+
+signed main() {
+    std::ios::sync_with_stdio(false), cin.tie(nullptr);
+    cin >> n >> m;
+
+    for (int i = 1, w; i <= n; ++i) {
+        cin >> w;
+        T.insert(w);
+    }
+
+    for (int i = 1, opt, u; i <= m; ++i) {
+        cin >> opt >> u;
+        u ^= last;
+
+        if (opt == 1) T.insert(u);
+        if (opt == 2) T.erase(u);
+        if (opt == 3) ans ^= (last = T.rank(u));
+        if (opt == 4) ans ^= (last = T[u]);
+        if (opt == 5) ans ^= (last = T.getpre(u));
+        if (opt == 6) ans ^= (last = T.getsuc(u));
+    }
+
+    cout << ans << '\n';
     return 0;
 }
