@@ -19,13 +19,13 @@ class FhqTreap {
         int size, weight;
         T val;
         Node *l, *r;
+        inline void calc() {
+            size = 1 + (l != nullptr ? l->size : 0) + (r != nullptr ? r->size : 0);
+        }
     };
     int n;
     Node *root;
 
-    inline void calc(Node *u) {
-        u->size = (u->l != nullptr ? u->l->size : 0) + (u->r != nullptr ? u->r->size + 1 : 0);
-    }
 
     Node *merge(Node *u, Node *v) {
         if (u == nullptr) return v;
@@ -33,44 +33,54 @@ class FhqTreap {
 
         if (u->weight < v->weight) {
             u->r = merge(u->r, v);
-            calc(u);
+            u->calc();
             return u;
         } else {
             v->l = merge(u, v->l);
-            calc(v);
+            v->calc();
             return v;
         }
     }
-    std::pair<Node *, Node *> split(Node *u, T w) {
-        if (u == nullptr) return {nullptr, nullptr};
+    std::pair<Node *, Node *> split(Node *p, T w) {
+        if (p == nullptr) return {nullptr, nullptr};
 
-        if (w < u->val) {
-            auto o = split(u->l, w);
-            u->l = o.second;
-            calc(u);
-            return {o.first, u};
+        if (w < p->val) {
+            auto o = split(p->l, w);
+            p->l = o.second;
+            p->calc();
+            return {o.first, p};
         } else {
-            auto o = split(u->r, w);
-            u->r = o.first;
-            calc(u);
-            return {u, o.second};
+            auto o = split(p->r, w);
+            p->r = o.first;
+            p->calc();
+            return {p, o.second};
         }
     }
-    Node *kth(Node *u, int k) {
-        assert(root != nullptr);
-        assert(root->size < k);
-        while (k != u->l->size + 1) {
-            if (k <= u->l->size)
-                u = u->l;
+    Node *kth(Node *p, int k) {
+        assert(p != nullptr);
+        if (p->size < k)
+            cerr << p->size << ' ' << k << '\n';
+        assert(p->size >= k);
+        while (k != (p->l == nullptr ? 0 : p->l->size) + 1)
+            if (p->l != nullptr && k <= p->l->size)
+                p = p->l;
             else {
-                k -= u->l->size + 1;
-                u = u->r;
+                k -= (p->l == nullptr ? 0 : p->l->size) + 1;
+                assert(p->r != nullptr);
+                p = p->r;
             }
-        }
-        return u;
+        return p;
+    }
+
+    void destruct(Node *p) {
+        if (p == nullptr) return;
+        destruct(p->l), destruct(p->r);
+        delete p;
     }
 
    public:
+    FhqTreap() { root = nullptr; }
+    ~FhqTreap() { destruct(root); }
     inline void insert(T w) {
         auto o = split(root, w);
         root = merge(merge(o.first, new Node(w)), o.second);
@@ -80,18 +90,20 @@ class FhqTreap {
         auto o1 = split(root, w - 1);
         auto o2 = split(o1.second, w);
         delete o2.first;
+        o2.first = nullptr;
         root = merge(o1.first, o2.second);
     }
 
-    inline int rank(T w) {
+    inline int find(T w) {
         auto o = split(root, w - 1);
+        if (o.first == nullptr) return 1;
         int res = o.first->size + 1;
         root = merge(o.first, o.second);
         return res;
     }
 
-    inline T at(int pos) { return kth(root, pos)->val; }
-    inline T operator[](int pos) { return at(pos); }
+    inline const T at(int pos) { return kth(root, pos)->val; }
+    inline const T operator[](int pos) { return at(pos); }
 
     inline T getpre(T w) {
         auto o = split(root, w - 1);
@@ -110,26 +122,29 @@ class FhqTreap {
 FhqTreap<int> T;
 
 signed main() {
+    freopen(".in", "r", stdin);
     std::ios::sync_with_stdio(false), cin.tie(nullptr);
-    cin >> n >> m;
+    cin >> n;// >> m;
 
-    for (int i = 1, w; i <= n; ++i) {
-        cin >> w;
-        T.insert(w);
-    }
+    // for (int i = 1, w; i <= n; ++i) {
+    //     cin >> w;
+    //     T.insert(w);
+    // }
 
-    for (int i = 1, opt, u; i <= m; ++i) {
+    for (int i = 1, opt, u; i <= n; ++i) {
         cin >> opt >> u;
-        u ^= last;
+        // u ^= last;
 
         if (opt == 1) T.insert(u);
         if (opt == 2) T.erase(u);
-        if (opt == 3) ans ^= (last = T.rank(u));
+        if (opt == 3) ans ^= (last = T.find(u));
         if (opt == 4) ans ^= (last = T[u]);
         if (opt == 5) ans ^= (last = T.getpre(u));
         if (opt == 6) ans ^= (last = T.getsuc(u));
+        if (opt >= 3) cout << last << '\n';
+        cout.flush();
     }
 
-    cout << ans << '\n';
+    // cout << ans << '\n';
     return 0;
 }
