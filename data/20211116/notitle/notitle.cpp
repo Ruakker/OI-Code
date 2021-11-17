@@ -3,6 +3,7 @@ using std::cin;
 using std::cout;
 using std::cerr;
 
+#define int long long
 const int N = 4e5 + 5, P = 1e9 + 7;
 long long ans[N], n;
 
